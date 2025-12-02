@@ -1,44 +1,49 @@
 # Post-Merger Sales Data Pipeline  
-### Databricks | PySpark | Spark SQL | AWS S3 | Medallion Architecture
+### Databricks | PySpark | Spark SQL | AWS S3 | Medallion Architecture | Incremental Loads | Dashboards
 
 This project simulates a real-world **post-merger data integration problem** in the **sales domain**.
 
-A mature company (**Atlon**) acquires a fast-growing startup (**Sports Bar**).  
-Atlon has clean ERP-driven data, while Sports Bar has messy CSV-based sales data with:
-- Inconsistent schemas
-- Missing months
-- Typos in cities & customer names
-- Invalid and negative prices
-- Duplicate records
+A mature enterprise (**Atlon**) acquired a fast-growing startup (**Sports Bar**).  
+Their data environments were completely different:
 
-Leadership needed a **single trusted sales dataset** for forecasting and inventory planning.
+- Atlon → Clean ERP-driven structured data  
+- Sports Bar → Messy CSV-based startup data with:
+  - Missing months
+  - Duplicates
+  - Typos in city & customer names
+  - Invalid and negative prices
+  - Inconsistent schemas
 
-This repository contains the **end-to-end Databricks data pipeline** I built to solve that problem using the **Medallion Architecture (Bronze → Silver → Gold).**
+Leadership required a **single trusted analytics layer** for unified sales and inventory planning.
+
+I built a **production-style end-to-end data pipeline on Databricks** using the **Medallion Architecture (Bronze → Silver → Gold)** with **incremental loading and scheduled execution**.
 
 ---
 
 ## 🧱 Architecture
 
-- **Storage:** AWS S3 (raw CSV files)
-- **Compute:** Databricks
-- **Processing:** PySpark & Spark SQL
-- **Storage Format:** Delta Lake
+- **Cloud Storage:** AWS S3  
+- **Compute:** Databricks  
+- **Processing:** PySpark & Spark SQL  
+- **Storage Format:** Delta Lake  
+- **Orchestration:** Databricks Jobs (Scheduled Runs)
 
-**Layers**
-- **Bronze:** Raw ingestion from S3 (no transformations)
-- **Silver:** Data cleaning & standardization
-- **Gold:** Monthly sales aggregation & unified fact tables
+### Layers
+- **Bronze:** Raw incremental ingestion from S3
+- **Silver:** Data cleansing, validation & standardization
+- **Gold:** Monthly aggregation, upserts, BI-ready fact tables
 
-> Add your architecture image here once uploaded:  
+> Add your architecture image here:  
 > `architecture/medallion_architecture.png`
 
 ---
 
-## 🥉 Bronze Layer – Raw Ingestion
+## 🥉 Bronze Layer – Incremental Raw Ingestion
 Location: `notebooks/bronze/`
 
 - Ingest raw CSV files from AWS S3
-- Preserve original schema for audit & reprocessing
+- Load only **new or changed data (incremental strategy)**
+- Preserve original schema for audit & replay
 - No transformations applied
 
 ---
@@ -49,8 +54,8 @@ Location: `notebooks/silver/`
 Key transformations:
 - City name standardization using mapping logic
 - Customer name normalization using `trim()` and `initcap()`
-- Negative & invalid prices corrected
-- Duplicate customer records removed
+- Invalid price correction (negative & non-numeric values)
+- Removal of duplicate customer records
 - Schema alignment across both companies
 
 ---
@@ -58,26 +63,63 @@ Key transformations:
 ## 🥇 Gold Layer – Aggregation & Unification
 Location: `notebooks/gold/`
 
-- Daily sales aggregated to **monthly sales**
-- Sports Bar sales **merged (upserted)** into Atlon fact tables
-- Created **BI-ready denormalized view** for analytics
+- Daily sales aggregated into **monthly sales**
+- **Upsert (MERGE)** into unified sales fact table
+- Creation of **denormalized BI-ready views**
+- Supports incremental refresh instead of full reloads
+
+---
+
+## ⏱️ Orchestration & Scheduling
+
+- All pipeline stages are executed using **Databricks Jobs**
+- Pipeline supports:
+  - Incremental Bronze ingestion
+  - Incremental Silver transformation
+  - Incremental Gold aggregation & merge
+- Can run on:
+  - Daily
+  - Weekly
+  - Or custom schedules
+
+---
+
+## 📊 Databricks SQL Dashboard
+
+A business-facing **Databricks SQL Dashboard** was created on the Gold layer:
+
+Key KPIs:
+- Total Revenue: **105.34B**
+- Total Quantity Sold: **34.13M**
+- Unique Customers: **54**
+- Average Selling Price: **4043.16**
+
+Visuals include:
+- Monthly revenue trend
+- Revenue share by channel
+- Top products by revenue
+- Top customers by revenue
+- Variant-level performance
+- Product price vs quantity analysis
 
 ---
 
 ## ⚙️ Technologies Used
 
-- Databricks (Lakehouse Platform)
+- Databricks
 - PySpark
 - Spark SQL
 - Delta Lake
 - AWS S3
 - Python
+- Databricks SQL Dashboards
+- Databricks Jobs (Scheduling)
 
 ---
 
 ## 🔐 Configuration & Security
 
-All AWS credentials and secrets are loaded using **environment variables**.  
+All AWS credentials and secrets are managed using **environment variables**.  
 No sensitive data is stored in this repository.
 
 Required environment variables:
@@ -90,26 +132,28 @@ Required environment variables:
 
 ## ▶️ How to Run (High Level)
 
-1. Upload raw CSV files to your S3 bucket
-2. Run Bronze notebooks for ingestion
-3. Run Silver notebooks for cleaning
-4. Run Gold notebooks for aggregation & merge
-5. Query the Gold tables for reporting
+1. Upload raw CSV sales files to AWS S3
+2. Trigger Databricks Job for Bronze incremental ingestion
+3. Execute Silver transformations
+4. Run Gold aggregation & merge job
+5. Refresh Databricks SQL Dashboard on Gold tables
 
 ---
 
 ## 🎯 Purpose of This Project
 
 This project demonstrates:
-- Real-world **ETL pipeline design**
-- Practical **data cleaning under messy business conditions**
-- Use of **Medallion Architecture**
-- Hands-on experience with **Databricks + PySpark for analytics engineering**
+- Real-world **ETL / ELT pipeline design**
+- **Incremental data processing**
+- **Job scheduling & orchestration**
+- Practical **data cleaning at scale**
+- **Medallion Architecture implementation**
+- End-to-end **analytics engineering on Databricks**
 
 ---
 
 ## 👤 Author
 
 **Mudasir Khan**  
-Targeting: Data Engineer / Analytics Engineer roles (US, Canada, Remote)
-
+Targeting: Data Engineer | Analytics Engineer  
+Location: US | Canada | Remote
